@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import CategorySelector from "../components/sidebar/CategorySelector";
 import ModelSelector from "../components/sidebar/ModelSelector";
 import ModeToggle from "../components/sidebar/ModeToggle";
-import StandardInterface from "../components/interfaces/StandardInterface";
 import ChatInterface from "../components/interfaces/ChatInterface";
 import ImageInterface from "../components/interfaces/ImageInterface";
 
@@ -21,12 +20,11 @@ export default function Main() {
     category: "text",
     models: [] as string[],
     selectedModel: "",
-    chatMode: false,
+    chatMode: true,
   });
 
   const [inputState, setInputState] = useState({
     input: "",
-    output: "",
     generatedImage: null as string | null,
   });
 
@@ -40,8 +38,8 @@ export default function Main() {
 
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
 
-  const { category, models, selectedModel, chatMode } = appState;
-  const { input, output, generatedImage } = inputState;
+  const { category, models, selectedModel } = appState;
+  const { input, generatedImage } = inputState;
   const { loading, tokenCount, inputTokens, historyTokens, showTokenWarning } =
     status;
 
@@ -67,7 +65,7 @@ export default function Main() {
           models: data.models || data || [],
           selectedModel: data.models?.[0] || "",
         }));
-        setInputState({ input: "", output: "", generatedImage: null });
+        setInputState({ input: "", generatedImage: null });
         setChatHistory([]);
       } catch (err) {
         console.error("Failed to fetch models", err);
@@ -82,35 +80,25 @@ export default function Main() {
     if (!selectedModel) return;
 
     const currentInputTokens = estimateTokenCount(input);
+    const currentHistoryTokens = calculateHistoryTokens(chatHistory);
+    const total = currentInputTokens + currentHistoryTokens + 1000;
 
-    if (chatMode) {
-      const currentHistoryTokens = calculateHistoryTokens(chatHistory);
-      const total = currentInputTokens + currentHistoryTokens + 1000;
-
-      setStatus((s) => ({
-        ...s,
-        inputTokens: currentInputTokens,
-        historyTokens: currentHistoryTokens,
-        tokenCount: total,
-        showTokenWarning: total > contextLimit * 0.9,
-      }));
-    } else {
-      setStatus((s) => ({
-        ...s,
-        inputTokens: currentInputTokens,
-        tokenCount: currentInputTokens,
-        showTokenWarning: currentInputTokens + 1000 > contextLimit * 0.9,
-      }));
-    }
-  }, [input, chatHistory, selectedModel, chatMode, contextLimit]);
+    setStatus((s) => ({
+      ...s,
+      inputTokens: currentInputTokens,
+      historyTokens: currentHistoryTokens,
+      tokenCount: total,
+      showTokenWarning: total > contextLimit * 0.9,
+    }));
+  }, [input, chatHistory, selectedModel, contextLimit]);
 
   const handleInputChange = (val: string) =>
     setInputState((s) => ({ ...s, input: val }));
 
   const selectModel = (id: string) => {
     setAppState((prev) => ({ ...prev, selectedModel: id }));
-    setInputState({ input: "", output: "", generatedImage: null });
-    if (chatMode) setChatHistory([]);
+    setInputState({ input: "", generatedImage: null });
+    setChatHistory([]);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -135,7 +123,7 @@ export default function Main() {
       } finally {
         setStatus((s) => ({ ...s, loading: false }));
       }
-    } else if (chatMode) {
+    } else {
       const userMessage: Message = { role: "user", content: input };
       const newHistory = [...chatHistory, userMessage];
 
@@ -171,30 +159,6 @@ export default function Main() {
       } finally {
         setStatus((s) => ({ ...s, loading: false }));
       }
-    } else {
-      if (inputTokens + 1000 > contextLimit) {
-        alert("Input too long. Please shorten your text.");
-        return;
-      }
-
-      setInputState((s) => ({ ...s, output: "" }));
-      try {
-        const res = await fetch("/api/run-job", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: selectedModel, input }),
-        });
-        const data = await res.json();
-        setInputState((s) => ({
-          ...s,
-          output: data.output || "No output received.",
-        }));
-      } catch (err) {
-        console.error(err);
-        setInputState((s) => ({ ...s, output: "Error running model." }));
-      } finally {
-        setStatus((s) => ({ ...s, loading: false }));
-      }
     }
   };
 
@@ -216,7 +180,6 @@ export default function Main() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      {/* Sidebar */}
       <div className="w-full md:w-64 bg-black border-r p-4 flex flex-col">
         <span className="flex flex-row items-center gap-2 pb-4">
           <h1 className="text-xl text-[#14C7C3] font-semibold">
@@ -236,18 +199,6 @@ export default function Main() {
             selectedModel={selectedModel}
             selectModel={selectModel}
           />
-          {category === "text" && (
-            <ModeToggle
-              chatMode={chatMode}
-              setChatMode={(mode: boolean) =>
-                setAppState((s) => ({ ...s, chatMode: mode }))
-              }
-              setOutput={(val: string) =>
-                setInputState((s) => ({ ...s, output: val }))
-              }
-              setChatHistory={setChatHistory}
-            />
-          )}
         </div>
 
         <div className="mt-6 md:mt-auto text-center hidden md:block font-semibold text-lg text-[#14C7C3]">
@@ -255,18 +206,10 @@ export default function Main() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="flex-1 p-4 overflow-y-auto">
         {!selectedModel ? (
           <div className="h-full flex items-center justify-center text-gray-500 text-center">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Select a Model</h2>
-              <p>
-                {category === "image"
-                  ? "Choose an image generation model from the sidebar to begin creating images."
-                  : "Select a model from the sidebar to begin."}
-              </p>
-            </div>
+            <div className="animate-pulse text-lg">Loading models...</div>
           </div>
         ) : category === "image" ? (
           <ImageInterface
@@ -278,7 +221,7 @@ export default function Main() {
             onReset={resetImage}
             onDownload={handleDownload}
           />
-        ) : chatMode ? (
+        ) : (
           <ChatInterface
             input={input}
             chatHistory={chatHistory}
@@ -291,17 +234,6 @@ export default function Main() {
             onChange={handleInputChange}
             onSubmit={handleSubmit}
             onTrimHistory={handleTrim}
-          />
-        ) : (
-          <StandardInterface
-            input={input}
-            output={output}
-            loading={loading}
-            inputTokens={inputTokens}
-            showTokenWarning={showTokenWarning}
-            contextLimit={getContextLimit(selectedModel)}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
           />
         )}
       </div>

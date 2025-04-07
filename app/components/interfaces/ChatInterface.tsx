@@ -1,6 +1,6 @@
 "use client";
 
-import { Textarea, Button } from "../ui";
+import { Textarea, Button } from "../ui/";
 import { Loader2, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Message } from "../../types/message";
