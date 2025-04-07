@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import CategorySelector from "../components/sidebar/CategorySelector";
 import ModelSelector from "../components/sidebar/ModelSelector";
-import ModeToggle from "../components/sidebar/ModeToggle";
 import ChatInterface from "../components/interfaces/ChatInterface";
 import ImageInterface from "../components/interfaces/ImageInterface";
 
