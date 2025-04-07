@@ -117,7 +117,7 @@ export default function ChatInterface({
               className="w-full max-w-xs sm:max-w-xs md:max-w-md"
             />
             <div className="text-gray-400 text-center text-md md:text-lg">
-              Start a conversation with the model
+              Start a conversation with the model.
             </div>
           </div>
         )}
