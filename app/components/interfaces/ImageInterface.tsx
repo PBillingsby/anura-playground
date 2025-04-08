@@ -39,7 +39,7 @@ export default function ImageInterface({
       <div className="flex flex-col sm:flex-row justify-center gap-3 w-full max-w-md mt-4">
         <Button
           onClick={onDownload}
-          className="flex border border-white items-center justify-center gap-2"
+          className="hidden md:flex border border-white items-center justify-center gap-2"
         >
           <Loader2 className="h-4 w-4" />
           Download Image
