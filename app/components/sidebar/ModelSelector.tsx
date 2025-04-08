@@ -11,7 +11,6 @@ export default function ModelSelector({
   selectedModel,
   selectModel,
 }: Props) {
-  // Select the first model by default
   useEffect(() => {
     if (!selectedModel && models.length > 0) {
       selectModel(models[0]);

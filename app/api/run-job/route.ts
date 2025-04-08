@@ -1,17 +1,10 @@
-// app/api/run-job/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { model, input, messages, inputValue } = body;
-    
-    // Check which type of request this is
-    // 1. Image generation (has inputValue)
-    // 2. Chat completion (has messages array)
-    // 3. Standard text completion (has input)
-    
-    // 1. Handle image generation
+    const { model, messages, temperature, max_tokens, inputValue } = body;
+
     if (inputValue) {
       console.log("Image generation request:", { model, prompt: inputValue });
       
@@ -23,12 +16,12 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           prompt: inputValue,
-          model: model || "sdxl-turbo", // Default to sdxl-turbo if no model specified
+          model: model || "sdxl-turbo"
         }),
       });
 
       if (!lilypadRes.ok) {
-        const text = await lilypadRes.text(); // fallback to raw response
+        const text = await lilypadRes.text();
         throw new Error(`Lilypad API Error: ${text}`);
       }
 
@@ -41,15 +34,18 @@ export async function POST(req: Request) {
         image: `data:${mimeType};base64,${base64Image}`,
       });
     }
-    // 2. Handle chat completion
     else if (Array.isArray(messages) && messages.length > 0) {
       console.log("Chat completion request:", { 
         model, 
         messageCount: messages.length 
       });
       
-      // Log the full messages array to help with debugging
-      console.log("Processing chat messages:", JSON.stringify(messages));
+      console.log("Processing chat messages:", JSON.stringify({
+        model: model,
+        messages: messages,
+        max_tokens: max_tokens,
+        temperature: temperature ?? 0.7 // Defaults to 0.7
+      }));
       
       const res = await fetch("https://anura-testnet.lilypad.tech/api/v1/chat/completions", {
         method: "POST",
@@ -61,8 +57,8 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           model: model,
           messages: messages,
-          max_tokens: 2048,
-          temperature: 0.7
+          max_tokens: max_tokens,
+          temperature: temperature ?? 0.7 // Defaults to 0.7
         }),
       });
 
@@ -80,7 +76,6 @@ export async function POST(req: Request) {
         const data = await res.json();
         console.log("API response received:", data);
         
-        // Ensure we're getting the correct format from the API
         const assistantResponse = data.choices?.[0]?.message?.content;
         
         if (!assistantResponse) {
@@ -99,36 +94,6 @@ export async function POST(req: Request) {
           error: "Failed to parse model response"
         }, { status: 500 });
       }
-    }
-    // 3. Handle standard text completion
-    else {
-      console.log("Standard completion request:", { model, input });
-      
-      const res = await fetch("https://anura-testnet.lilypad.tech/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "text/event-stream",
-          "Authorization": `Bearer ${process.env.LILYPAD_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: "user", content: input }],
-          max_tokens: 2048,
-          temperature: 0.7
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("API error:", errorText);
-        return NextResponse.json({ error: "Failed to process request" }, { status: res.status });
-      }
-
-      const data = await res.json();
-      const assistantResponse = data.choices[0].message.content;
-      
-      return NextResponse.json({ output: assistantResponse });
     }
   } catch (error) {
     if (error instanceof Error) {

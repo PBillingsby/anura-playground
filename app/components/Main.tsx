@@ -5,7 +5,7 @@ import CategorySelector from "../components/sidebar/CategorySelector";
 import ModelSelector from "../components/sidebar/ModelSelector";
 import ChatInterface from "../components/interfaces/ChatInterface";
 import ImageInterface from "../components/interfaces/ImageInterface";
-
+import { MODEL_CONTEXT_LIMITS } from "../lib/tokens";
 import {
   estimateTokenCount,
   calculateHistoryTokens,
@@ -13,6 +13,8 @@ import {
 } from "../lib/tokens";
 import { trimHistory } from "../lib/utils";
 import { Message } from "../types/message";
+import TemperatureSlider from "./sidebar/TemperatureSlider";
+import MaxTokenSlider from "./sidebar/MaxTokenSlider";
 
 export default function Main() {
   const [appState, setAppState] = useState({
@@ -25,6 +27,7 @@ export default function Main() {
   const [inputState, setInputState] = useState({
     input: "",
     generatedImage: null as string | null,
+    temperature: 0.7,
   });
 
   const [status, setStatus] = useState({
@@ -41,6 +44,8 @@ export default function Main() {
   const { input, generatedImage } = inputState;
   const { loading, tokenCount, inputTokens, historyTokens, showTokenWarning } =
     status;
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [maxTokens, setMaxTokens] = useState<number>(4000); // Default fallback
 
   const contextLimit = getContextLimit(selectedModel);
 
@@ -64,7 +69,7 @@ export default function Main() {
           models: data.models || data || [],
           selectedModel: data.models?.[0] || "",
         }));
-        setInputState({ input: "", generatedImage: null });
+        setInputState({ input: "", generatedImage: null, temperature: 0.7 });
         setChatHistory([]);
       } catch (err) {
         console.error("Failed to fetch models", err);
@@ -95,8 +100,12 @@ export default function Main() {
     setInputState((s) => ({ ...s, input: val }));
 
   const selectModel = (id: string) => {
+    const modelLimit =
+      MODEL_CONTEXT_LIMITS[selectedModel] ?? MODEL_CONTEXT_LIMITS["default"];
+    const defaultMaxTokens = Math.floor(modelLimit * 0.6);
+    setMaxTokens(defaultMaxTokens);
     setAppState((prev) => ({ ...prev, selectedModel: id }));
-    setInputState({ input: "", generatedImage: null });
+    setInputState({ input: "", generatedImage: null, temperature: 0.7 });
     setChatHistory([]);
   };
 
@@ -134,13 +143,18 @@ export default function Main() {
       }
 
       setChatHistory(newHistory);
-      setInputState((s) => ({ ...s, input: "" }));
+      setInputState((s) => ({ ...s, input: "", temperature: temperature }));
 
       try {
         const res = await fetch("/api/run-job", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: selectedModel, messages: newHistory }),
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: newHistory,
+            temperature: temperature,
+            max_tokens: maxTokens,
+          }),
         });
 
         const data = await res.json();
@@ -198,6 +212,22 @@ export default function Main() {
             selectedModel={selectedModel}
             selectModel={selectModel}
           />
+          {category !== "image" && (
+            <>
+              <TemperatureSlider
+                temperature={temperature}
+                setTemperature={setTemperature}
+              />
+              <MaxTokenSlider
+                maxTokens={maxTokens}
+                setMaxTokens={setMaxTokens}
+                modelLimit={
+                  MODEL_CONTEXT_LIMITS[selectedModel] ??
+                  MODEL_CONTEXT_LIMITS["default"]
+                }
+              />
+            </>
+          )}
         </div>
 
         <div className="mt-6 md:mt-auto text-center hidden md:block font-semibold text-lg text-[#14C7C3]">

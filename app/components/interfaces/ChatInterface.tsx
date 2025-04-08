@@ -43,8 +43,6 @@ export default function ChatInterface({
   }, [chatHistory]);
 
   const renderChatMessage = (message: Message, index: number) => {
-    console.log("-----", message);
-
     return (
       <div
         key={index}
