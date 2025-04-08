@@ -27,11 +27,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/lp-logo.svg" type="image/svg+xml" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <body className={`font-mono antialiased`}>{children}</body>
     </html>
   );
 }
