@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import CategorySelector from "../components/sidebar/CategorySelector";
 import ModelSelector from "../components/sidebar/ModelSelector";
@@ -18,6 +18,7 @@ import { trimHistory } from "../lib/utils";
 import { Message } from "../types/message";
 
 export default function Main() {
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [appState, setAppState] = useState({
@@ -98,6 +99,27 @@ export default function Main() {
       showTokenWarning: total > contextLimit * 0.9,
     }));
   }, [input, chatHistory, selectedModel, contextLimit]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        setSidebarOpen(false);
+      }
+    };
+
+    if (sidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [sidebarOpen]);
 
   const handleInputChange = (val: string) =>
     setInputState((s) => ({ ...s, input: val }));
@@ -196,7 +218,6 @@ export default function Main() {
 
   return (
     <div className="flex h-screen">
-      {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-black z-20 flex items-center justify-between p-4 border-b">
         <span className="flex flex-row items-center gap-2 text-[#14C7C3] font-semibold text-lg">
           <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />
@@ -211,12 +232,12 @@ export default function Main() {
         </button>
       </div>
 
-      {/* Sidebar */}
       <div
+        ref={sidebarRef}
         className={`fixed md:static top-0 left-0 h-full w-64 bg-black border-r p-4 z-30 transform transition-transform duration-300 ease-in-out
-        ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0`}
       >
         <div className="hidden md:flex items-center gap-2 text-[#14C7C3] text-xl font-semibold">
           <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />
@@ -252,13 +273,8 @@ export default function Main() {
             </>
           )}
         </div>
-
-        <div className="mt-6 md:mt-auto text-center text-lg font-semibold text-[#14C7C3] hidden md:block">
-          Made with Lilypad
-        </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-4 overflow-y-auto mt-14 md:mt-0">
         {!selectedModel ? (
           <div className="h-full flex items-center justify-center text-gray-500 text-center">
