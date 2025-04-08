@@ -126,7 +126,7 @@ export default function Main() {
 
   const selectModel = (id: string) => {
     const modelLimit =
-      MODEL_CONTEXT_LIMITS[selectedModel] ?? MODEL_CONTEXT_LIMITS["default"];
+      MODEL_CONTEXT_LIMITS[id] ?? MODEL_CONTEXT_LIMITS["default"];
     const defaultMaxTokens = Math.floor(modelLimit * 0.6);
     setMaxTokens(defaultMaxTokens);
     setAppState((prev) => ({ ...prev, selectedModel: id }));
@@ -217,7 +217,7 @@ export default function Main() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[100dvh] overflow-hidden">
       <div className="md:hidden fixed top-0 left-0 right-0 bg-black z-20 flex items-center justify-between p-4 border-b">
         <span className="flex flex-row items-center gap-2 text-[#14C7C3] font-semibold text-lg">
           <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />

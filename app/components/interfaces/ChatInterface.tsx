@@ -88,7 +88,7 @@ export default function ChatInterface({
 
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto rounded border p-4 mb-2"
+        className="overflow-y-auto rounded border max-h-[calc(100dvh-220px)] rounded-lg border p-4 mb-2"
       >
         {chatHistory.length > 0 ? (
           <>
@@ -143,7 +143,7 @@ export default function ChatInterface({
         <Button
           type="submit"
           disabled={loading || !input.trim() || showTokenWarning}
-          className="h-full border border-gray-400"
+          className="border border-gray-400 text-white px-4"
         >
           {loading ? "Sending..." : "Send"}
         </Button>

@@ -75,7 +75,7 @@ export default function ImageInterface({
 
   return (
     <div className="flex flex-col h-full max-h-screen">
-      <div className="flex-1 overflow-y-auto border border-white rounded-lg mb-2">
+      <div className="overflow-y-auto border p-4 mb-2 max-h-[calc(100dvh-220px)] border-white rounded-lg">
         {generatedImage ? renderImageResult() : renderForm()}
       </div>
 
