@@ -1,22 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import CategorySelector from "../components/sidebar/CategorySelector";
 import ModelSelector from "../components/sidebar/ModelSelector";
 import ChatInterface from "../components/interfaces/ChatInterface";
 import ImageInterface from "../components/interfaces/ImageInterface";
-import { MODEL_CONTEXT_LIMITS } from "../lib/tokens";
+import TemperatureSlider from "./sidebar/TemperatureSlider";
+import MaxTokenSlider from "./sidebar/MaxTokenSlider";
 import {
+  MODEL_CONTEXT_LIMITS,
   estimateTokenCount,
   calculateHistoryTokens,
   getContextLimit,
 } from "../lib/tokens";
 import { trimHistory } from "../lib/utils";
 import { Message } from "../types/message";
-import TemperatureSlider from "./sidebar/TemperatureSlider";
-import MaxTokenSlider from "./sidebar/MaxTokenSlider";
 
 export default function Main() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [appState, setAppState] = useState({
     category: "text",
     models: [] as string[],
@@ -39,13 +42,13 @@ export default function Main() {
   });
 
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [maxTokens, setMaxTokens] = useState<number>(4000);
 
   const { category, models, selectedModel } = appState;
   const { input, generatedImage } = inputState;
   const { loading, tokenCount, inputTokens, historyTokens, showTokenWarning } =
     status;
-  const [temperature, setTemperature] = useState<number>(0.7);
-  const [maxTokens, setMaxTokens] = useState<number>(4000); // Default fallback
 
   const contextLimit = getContextLimit(selectedModel);
 
@@ -143,7 +146,7 @@ export default function Main() {
       }
 
       setChatHistory(newHistory);
-      setInputState((s) => ({ ...s, input: "", temperature: temperature }));
+      setInputState((s) => ({ ...s, input: "", temperature }));
 
       try {
         const res = await fetch("/api/run-job", {
@@ -152,7 +155,7 @@ export default function Main() {
           body: JSON.stringify({
             model: selectedModel,
             messages: newHistory,
-            temperature: temperature,
+            temperature,
             max_tokens: maxTokens,
           }),
         });
@@ -192,15 +195,35 @@ export default function Main() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      <div className="w-full md:w-64 bg-black border-r p-4 flex flex-col">
-        <span className="flex flex-row items-center gap-1">
-          <h1 className="text-xl text-[#14C7C3] font-semibold">
-            Anura Playground
-          </h1>
+    <div className="flex h-screen">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-black z-20 flex items-center justify-between p-4 border-b">
+        <span className="flex flex-row items-center gap-2 text-[#14C7C3] font-semibold text-lg">
           <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />
+          Anura Playground
         </span>
-        <div className="flex flex-col gap-4 md:gap-6 flex-1 my-4">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? (
+            <X className="text-white" />
+          ) : (
+            <Menu className="text-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <div
+        className={`fixed md:static top-0 left-0 h-full w-64 bg-black border-r p-4 z-30 transform transition-transform duration-300 ease-in-out
+        ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        <div className="hidden md:flex items-center gap-2 text-[#14C7C3] text-xl font-semibold">
+          <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />
+          Anura Playground
+        </div>
+
+        <div className="flex flex-col gap-4 md:gap-6 flex-1 mt-6">
           <CategorySelector
             category={category}
             setCategory={(c: string) =>
@@ -230,12 +253,13 @@ export default function Main() {
           )}
         </div>
 
-        <div className="mt-6 md:mt-auto text-center hidden md:block font-semibold text-lg text-[#14C7C3]">
+        <div className="mt-6 md:mt-auto text-center text-lg font-semibold text-[#14C7C3] hidden md:block">
           Made with Lilypad
         </div>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto">
+      {/* Main Content */}
+      <div className="flex-1 p-4 overflow-y-auto mt-14 md:mt-0">
         {!selectedModel ? (
           <div className="h-full flex items-center justify-center text-gray-500 text-center">
             <div className="animate-pulse text-lg">Loading models...</div>
@@ -259,7 +283,7 @@ export default function Main() {
             inputTokens={inputTokens}
             historyTokens={historyTokens}
             showTokenWarning={showTokenWarning}
-            contextLimit={getContextLimit(selectedModel)}
+            contextLimit={contextLimit}
             onChange={handleInputChange}
             onSubmit={handleSubmit}
             onTrimHistory={handleTrim}
