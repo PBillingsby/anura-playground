@@ -88,7 +88,7 @@ export default function ChatInterface({
 
       <div
         ref={chatContainerRef}
-        className="overflow-y-auto rounded border max-h-[calc(100dvh-220px)] rounded-lg border p-4 mb-2"
+        className="flex-1 overflow-y-auto rounded border p-4 mb-2"
       >
         {chatHistory.length > 0 ? (
           <>
