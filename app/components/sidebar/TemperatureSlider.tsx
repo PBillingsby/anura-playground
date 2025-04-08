@@ -9,7 +9,7 @@ export default function TemperatureSlider({
   setTemperature,
 }: TemperatureSliderProps) {
   return (
-    <div className="mt-4">
+    <div className="md:mt-4">
       <h2 className="text-lg text-white font-semibold mb-2">
         Temperature: {temperature.toFixed(2)}
       </h2>

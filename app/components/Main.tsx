@@ -194,13 +194,13 @@ export default function Main() {
   return (
     <div className="flex flex-col md:flex-row h-screen">
       <div className="w-full md:w-64 bg-black border-r p-4 flex flex-col">
-        <span className="flex flex-row items-center gap-2 pb-4">
+        <span className="flex flex-row items-center gap-1">
           <h1 className="text-xl text-[#14C7C3] font-semibold">
             Anura Playground
           </h1>
           <img src="/lp-logo.svg" alt="Lilypad Logo" className="w-6 h-6" />
         </span>
-        <div className="flex flex-col gap-6 flex-1">
+        <div className="flex flex-col gap-4 md:gap-6 flex-1 my-4">
           <CategorySelector
             category={category}
             setCategory={(c: string) =>

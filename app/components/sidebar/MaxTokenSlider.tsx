@@ -10,7 +10,7 @@ export default function MaxTokenSlider({
   modelLimit = 16384,
 }: MaxTokenSliderProps) {
   return (
-    <div className="mt-4">
+    <div className="md:mt-4">
       <h2 className="text-lg text-white font-semibold mb-2">
         Max Tokens: {maxTokens}
       </h2>
