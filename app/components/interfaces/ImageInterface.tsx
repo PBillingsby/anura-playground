@@ -59,7 +59,7 @@ export default function ImageInterface({
       <div className="text-center max-w-md p-4">
         <img
           src="/robofrog.png"
-          className="w-[200px] max-w-[80%] mx-auto sm:w-[220px] md:w-[300px]"
+          className="md:visible hidden w-[200px] max-w-[80%] mx-auto sm:w-[220px] md:w-[300px]"
           alt="RoboFrog"
         />
         <p className="text-gray-500 mb-4 text-md md:text-lg">
