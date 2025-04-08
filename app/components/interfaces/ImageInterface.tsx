@@ -59,7 +59,8 @@ export default function ImageInterface({
       <div className="text-center max-w-md p-4">
         <img
           src="/robofrog.png"
-          className="w-full max-w-xs sm:max-w-xs md:max-w-md"
+          className="w-[200px] max-w-[80%] mx-auto sm:w-[220px] md:w-[300px]"
+          alt="RoboFrog"
         />
         <p className="text-gray-500 mb-4 text-md md:text-lg">
           Enter a prompt to generate an image using the selected model.

@@ -114,7 +114,8 @@ export default function ChatInterface({
           <div className="h-full flex flex-col items-center justify-center space-y-4">
             <img
               src="/robofrog.png"
-              className="w-full max-w-xs sm:max-w-xs md:max-w-md"
+              className="w-[200px] max-w-[80%] mx-auto sm:w-[220px] md:w-[300px]"
+              alt="RoboFrog"
             />
             <div className="text-gray-400 text-center text-md md:text-lg">
               Start a conversation with the model.
