@@ -234,7 +234,7 @@ export default function Main() {
 
       <div
         ref={sidebarRef}
-        className={`fixed md:static top-0 left-0 h-full w-64 bg-black border-r p-4 z-30 transform transition-transform duration-300 ease-in-out
+        className={`fixed md:static top-0 left-0 h-full w-64 bg-black border-r p-4 z-30 transform transition-transform duration-300 ease-in-out flex flex-col
           ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0`}
@@ -273,6 +273,18 @@ export default function Main() {
             </>
           )}
         </div>
+
+        <button
+          onClick={() =>
+            window.open(
+              "https://docs.lilypad.tech/lilypad/developer-resources/ai-model-marketplace/build-a-job-module",
+              "_blank"
+            )
+          }
+          className="w-full px-4 py-3 mt-4 bg-[#14C7C3] cursor-pointer font-medium text-black font-medium rounded hover:bg-[#0eafab] transition-colors"
+        >
+          Add your own model
+        </button>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto mt-14 md:mt-0">
