@@ -1,10 +1,26 @@
 "use client";
 
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+const rehypeHighlight = require("rehype-highlight").default;
+import "highlight.js/styles/github-dark.css";
+
+import { useEffect, useRef } from "react";
 import { Textarea, Button } from "../ui/";
 import { Loader2, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Message } from "../../types/message";
-import { useRef, useEffect } from "react";
+
+import { Fragment } from "react";
+
+function flattenChildren(node: unknown): string {
+  if (typeof node === "string") return node;
+  if (Array.isArray(node)) return node.map(flattenChildren).join("");
+  if (typeof node === "object" && node !== null && "props" in node) {
+    return flattenChildren((node as any).props.children);
+  }
+  return "";
+}
 
 type Props = {
   input: string;
@@ -42,39 +58,108 @@ export default function ChatInterface({
     }
   }, [chatHistory]);
 
-  const renderChatMessage = (message: Message, index: number) => (
-    <div
-      key={index}
-      className={`p-3 rounded-lg mb-3 ${
-        message.role === "user"
-          ? "bg-blue-400 ml-8 text-black text-lg"
-          : message.role === "system"
-          ? "bg-[#14C7C3] border border-yellow-200"
-          : "bg-[#14C7C3] mr-8 text-black text-lg"
-      }`}
-    >
-      <div className="font-semibold mb-1">
-        {message.role === "user"
-          ? "You"
-          : message.role === "system"
-          ? "System"
-          : "Assistant"}
-      </div>
+  const renderChatMessage = (message: Message, index: number) => {
+    const { role, content } = message;
+    const isUser = role === "user";
+    const isSystem = role === "system";
+    const isAssistant = role === "assistant";
+
+    const cleanContent =
+      typeof content === "string"
+        ? content.replace(/\n`([^`\n]+)`\n/g, " `$1` ")
+        : JSON.stringify(content, null, 2);
+
+    return (
       <div
-        className={
-          message.role === "assistant"
-            ? "prose max-w-none dark:prose-invert"
-            : ""
-        }
+        key={index}
+        className={`p-3 rounded-lg mb-3 text-lg ${
+          isUser
+            ? "bg-blue-400 ml-8 text-black"
+            : isSystem
+            ? "bg-[#14C7C3] border border-yellow-200"
+            : "bg-[#14C7C3] mr-8 text-black"
+        }`}
       >
-        {message.role === "assistant" ? (
-          <ReactMarkdown>{message.content}</ReactMarkdown>
-        ) : (
-          <div className="whitespace-pre-wrap">{message.content}</div>
-        )}
+        <div className="font-semibold mb-1">
+          {isUser ? "You" : isSystem ? "System" : "Assistant"}
+        </div>
+        <div
+          className={isAssistant ? "prose max-w-none dark:prose-invert" : ""}
+        >
+          {isAssistant ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeHighlight]}
+              components={{
+                code({ node, className = "", children, ...props }) {
+                  const codeString = flattenChildren(children).trim();
+                  const block = /\blanguage-/.test(className);
+
+                  if (!block) {
+                    return (
+                      <code className="bg-gray-800 text-[#d4d4d4] p-1 rounded text-sm">
+                        {codeString}
+                      </code>
+                    );
+                  }
+
+                  return (
+                    <Fragment>
+                      {/* eslint-disable-next-line react/no-unescaped-entities */}
+                      <div className="relative group my-2">
+                        <pre
+                          className={`bg-gray-900 text-white p-4 rounded overflow-x-auto text-sm ${className}`}
+                        >
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        </pre>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigator.clipboard.writeText(codeString)
+                          }
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-white p-1 cursor-pointer rounded hover:bg-gray-700 transition-opacity"
+                          aria-label="Copy code"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="pointer-events-none"
+                          >
+                            <rect
+                              x="9"
+                              y="9"
+                              width="13"
+                              height="13"
+                              rx="2"
+                              ry="2"
+                            />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                        </button>
+                      </div>
+                    </Fragment>
+                  );
+                },
+              }}
+            >
+              {cleanContent}
+            </ReactMarkdown>
+          ) : (
+            <div className="whitespace-pre-wrap">{content}</div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-full max-h-screen">
@@ -152,6 +237,7 @@ export default function ChatInterface({
       <div className="text-xs text-gray-500 mb-1">
         Current input: ~{inputTokens} tokens | History: ~{historyTokens} tokens
       </div>
+
       {chatHistory.length > 4 && (
         <Button
           onClick={onTrimHistory}
