@@ -61,7 +61,7 @@ export default function ImageInterface({
         className="hidden md:block w-40 md:w-60 mb-4"
         alt="RoboFrog"
       />
-      <p className="text-gray-500 mb-4 text-md md:text-lg">
+      <p className="text-gray-400 mb-4 text-md md:text-lg">
         Enter a prompt to generate an image using the selected model.
       </p>
       {loading && (
@@ -86,6 +86,21 @@ export default function ImageInterface({
           placeholder="Enter prompt to generate image"
           className="resize-none w-full p-2"
           disabled={loading}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              if (input.trim()) {
+                const form = e.currentTarget.closest("form");
+                if (form) {
+                  const event = new Event("submit", {
+                    bubbles: true,
+                    cancelable: true,
+                  });
+                  form.dispatchEvent(event);
+                }
+              }
+            }
+          }}
         />
         <Button
           type="submit"
