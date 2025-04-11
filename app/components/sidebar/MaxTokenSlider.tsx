@@ -1,7 +1,7 @@
 type MaxTokenSliderProps = {
   maxTokens: number;
   setMaxTokens: (val: number) => void;
-  modelLimit?: number; // Optional upper limit per model
+  modelLimit?: number;
 };
 
 export default function MaxTokenSlider({
