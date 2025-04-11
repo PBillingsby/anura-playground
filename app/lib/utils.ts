@@ -30,3 +30,11 @@ export function trimHistory(
 
   return trimmed;
 }
+
+export const formatSearchResults = (
+  results: { title: string; url: string; snippet: string }[]
+): string => {
+  return results
+    ?.map((r, i) => `${i + 1}. ${r.title}\n${r.url}\n${r.snippet}`)
+    .join("\n\n");
+};
