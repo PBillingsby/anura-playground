@@ -15,7 +15,7 @@ import { Fragment } from "react";
 
 function flattenChildren(node: unknown): string {
   if (typeof node === "string") return node;
-  if (Array.isArray(node)) return node.map(flattenChildren).join("");
+  if (Array.isArray(node)) return node?.map(flattenChildren).join("");
   if (typeof node === "object" && node !== null && "props" in node) {
     return flattenChildren((node as any).props.children);
   }
@@ -177,7 +177,7 @@ export default function ChatInterface({
       >
         {chatHistory.length > 0 ? (
           <>
-            {chatHistory.map(renderChatMessage)}
+            {chatHistory?.map(renderChatMessage)}
             {loading && (
               <div className="p-3 rounded-lg mb-3 bg-[#14C7C3] text-black mr-8">
                 <div className="font-semibold mb-1">Assistant</div>

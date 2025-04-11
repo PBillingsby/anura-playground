@@ -19,7 +19,7 @@ export default function CategorySelector({ category, setCategory }: Props) {
       <h2 className="text-lg text-white font-semibold mb-2">Categories</h2>
       <div className="space-y-2">
         <div className="flex flex-col gap-2">
-          {categories.map((cat, i) => {
+          {categories?.map((cat, i) => {
             const isFirstDisabled =
               cat.disabled && !categories.slice(0, i).some((c) => c.disabled);
 
