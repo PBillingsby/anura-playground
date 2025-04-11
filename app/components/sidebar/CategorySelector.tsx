@@ -1,3 +1,5 @@
+import React from "react";
+
 type Props = {
   category: string;
   setCategory: (cat: string) => void;
@@ -7,44 +9,46 @@ export default function CategorySelector({ category, setCategory }: Props) {
   const categories = [
     { key: "text", label: "Text-to-Text" },
     { key: "image", label: "Text-to-Image" },
+    { key: "webSearch", label: "Web Search" },
     { key: "video", label: "Text-to-Video", disabled: true },
+    { key: "imageToText", label: "Image-to-Text", disabled: true },
   ];
 
   return (
     <div>
       <h2 className="text-lg text-white font-semibold mb-2">Categories</h2>
       <div className="space-y-2">
-        {categories.map(({ key, label, disabled }) => {
-          const isSelected = category === key;
+        <div className="flex flex-col gap-2">
+          {categories.map((cat, i) => {
+            const isFirstDisabled =
+              cat.disabled && !categories.slice(0, i).some((c) => c.disabled);
 
-          const baseClasses =
-            "block w-full text-left px-3 py-2 rounded transition-colors border";
-
-          const activeClasses = isSelected
-            ? "bg-black text-white border-[#14C7C3] hover:bg-white hover:text-black cursor-pointer"
-            : "bg-white text-black border-white hover:bg-gray-200 cursor-pointer";
-
-          // Refined disabled state that's more subtle but still distinctive
-          const disabledClasses =
-            "bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed";
-
-          return (
-            <div key={key}>
-              <button
-                onClick={() => !disabled && setCategory(key)}
-                disabled={disabled}
-                className={`${baseClasses} ${
-                  disabled ? disabledClasses : activeClasses
-                }`}
-              >
-                {label}
-              </button>
-              {disabled && (
-                <p className="text-xs text-gray-400 mt-1 ml-1">Coming soon</p>
-              )}
-            </div>
-          );
-        })}
+            return (
+              <React.Fragment key={cat.key}>
+                {isFirstDisabled && (
+                  <div className="text-lg text-white font-semibold my-2">
+                    Coming soon
+                  </div>
+                )}
+                <button
+                  disabled={cat.disabled}
+                  onClick={() => setCategory(cat.key)}
+                  className={`px-4 py-2 rounded border ${
+                    category === cat.key
+                      ? "bg-[#14C7C3] text-black"
+                      : "bg-gray-800"
+                  } ${
+                    cat.disabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
