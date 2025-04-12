@@ -1,3 +1,4 @@
+import { Message } from "@/app/types/message";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
       number_of_results = 3,
     }: {
       model: string;
-      messages?: any[];
+      messages?: Message[];
       temperature?: number;
       max_tokens?: number;
       inputValue?: string;
@@ -117,10 +118,11 @@ export async function POST(req: Request) {
       default:
         return NextResponse.json({ error: "Unsupported category" }, { status: 400 });
     }
-  } catch (error: any) {
-    console.error("Run-job error:", error);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("Run-job error:", err);
     return NextResponse.json(
-      { error: `Server error: ${error.message}` },
+      { error: `Server error: ${err.message}` },
       { status: 500 }
     );
   }
