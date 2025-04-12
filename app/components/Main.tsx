@@ -57,7 +57,6 @@ export default function Main() {
 
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
   const [relatedQueries, setRelatedQueries] = useState<string[]>([]);
-  const [numberOfResults, setNumberOfResults] = useState<number>(10);
 
   const { category, models, selectedModel } = appState;
   const { input, generatedImage } = inputState;
@@ -66,6 +65,9 @@ export default function Main() {
   const contextLimit = getContextLimit(selectedModel);
 
   useEffect(() => {
+    setInputState({ input: "", generatedImage: null, temperature: 0.7 });
+    setChatHistory([]);
+
     const fetchModels = async () => {
       if (category === "webSearch") {
         setAppState((prev) => ({
@@ -94,8 +96,6 @@ export default function Main() {
           models: data.models || data || [],
           selectedModel: data.models?.[0] || "",
         }));
-        setInputState({ input: "", generatedImage: null, temperature: 0.7 });
-        setChatHistory([]);
       } catch (err) {
         console.error("Failed to fetch models", err);
         setAppState((prev) => ({ ...prev, models: [] }));
@@ -169,7 +169,6 @@ export default function Main() {
     webSearch: () =>
       handleWebSearch(
         input,
-        numberOfResults,
         setWebResults,
         setRelatedQueries,
         process.env.NEXT_PUBLIC_ANURA_API_KEY!
