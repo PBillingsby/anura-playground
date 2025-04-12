@@ -1,26 +1,17 @@
 "use client";
 
+import { useEffect, useRef, Fragment, ReactNode } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Textarea, Button } from "../ui/";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-const rehypeHighlight = require("rehype-highlight").default;
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import { defaultSchema } from "hast-util-sanitize";
 import "highlight.js/styles/github-dark.css";
 
-import { useEffect, useRef } from "react";
-import { Textarea, Button } from "../ui/";
-import { Loader2, AlertCircle } from "lucide-react";
-import ReactMarkdown from "react-markdown";
 import { Message } from "../../types/message";
-
-import { Fragment } from "react";
-
-function flattenChildren(node: unknown): string {
-  if (typeof node === "string") return node;
-  if (Array.isArray(node)) return node?.map(flattenChildren).join("");
-  if (typeof node === "object" && node !== null && "props" in node) {
-    return flattenChildren((node as any).props.children);
-  }
-  return "";
-}
 
 type Props = {
   input: string;
@@ -35,6 +26,17 @@ type Props = {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
   onTrimHistory: () => void;
 };
+
+function flattenChildren(node: ReactNode): string {
+  if (typeof node === "string") return node;
+  if (Array.isArray(node)) return node.map(flattenChildren).join("");
+  if (typeof node === "object" && node !== null && "props" in node) {
+    return flattenChildren(
+      (node as { props: { children: ReactNode } }).props.children
+    );
+  }
+  return "";
+}
 
 export default function ChatInterface({
   input,
@@ -66,7 +68,7 @@ export default function ChatInterface({
 
     const cleanContent =
       typeof content === "string"
-        ? content.replace(/\n`([^`\n]+)`\n/g, " `$1` ")
+        ? content.replace(/<\/?think>/g, "")
         : JSON.stringify(content, null, 2);
 
     return (
@@ -89,64 +91,38 @@ export default function ChatInterface({
           {isAssistant ? (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw, rehypeHighlight]}
+              rehypePlugins={[
+                rehypeRaw,
+                [
+                  rehypeSanitize,
+                  {
+                    ...defaultSchema,
+                    tagNames: [...(defaultSchema.tagNames ?? []), "think"],
+                  },
+                ],
+                rehypeHighlight,
+              ]}
               components={{
-                code({ node, className = "", children, ...props }) {
+                code({ className = "", children, ...props }) {
                   const codeString = flattenChildren(children).trim();
-                  const block = /\blanguage-/.test(className);
+                  const isBlock = /\blanguage-/.test(className);
 
-                  if (!block) {
+                  if (!isBlock) {
                     return (
-                      <code className="bg-gray-800 text-[#d4d4d4] p-1 rounded text-sm">
+                      <code className="bg-gray-800 text-[#d4d4d4] px-1 py-[2px] rounded text-sm">
                         {codeString}
                       </code>
                     );
                   }
 
                   return (
-                    <Fragment>
-                      {/* eslint-disable-next-line react/no-unescaped-entities */}
-                      <div className="relative group my-2">
-                        <pre
-                          className={`bg-gray-900 text-white p-4 rounded overflow-x-auto text-sm ${className}`}
-                        >
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        </pre>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigator.clipboard.writeText(codeString)
-                          }
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-white p-1 cursor-pointer rounded hover:bg-gray-700 transition-opacity"
-                          aria-label="Copy code"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="pointer-events-none"
-                          >
-                            <rect
-                              x="9"
-                              y="9"
-                              width="13"
-                              height="13"
-                              rx="2"
-                              ry="2"
-                            />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                        </button>
-                      </div>
-                    </Fragment>
+                    <pre
+                      className={`bg-gray-900 text-white p-4 rounded overflow-x-auto text-sm ${className}`}
+                    >
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    </pre>
                   );
                 },
               }}
@@ -177,7 +153,7 @@ export default function ChatInterface({
       >
         {chatHistory.length > 0 ? (
           <>
-            {chatHistory?.map(renderChatMessage)}
+            {chatHistory.map(renderChatMessage)}
             {loading && (
               <div className="p-3 rounded-lg mb-3 bg-[#14C7C3] text-black mr-8">
                 <div className="font-semibold mb-1">Assistant</div>
@@ -215,11 +191,9 @@ export default function ChatInterface({
               if (input.trim()) {
                 const form = e.currentTarget.closest("form");
                 if (form) {
-                  const event = new Event("submit", {
-                    bubbles: true,
-                    cancelable: true,
-                  });
-                  form.dispatchEvent(event);
+                  form.dispatchEvent(
+                    new Event("submit", { bubbles: true, cancelable: true })
+                  );
                 }
               }
             }
@@ -241,8 +215,16 @@ export default function ChatInterface({
       {chatHistory.length > 4 && (
         <Button
           onClick={onTrimHistory}
-          className="w-full border border-white bg-yellow-100 hover:bg-yellow-200"
+          className="w-auto mx-auto border border-white text-black bg-yellow-100 hover:bg-yellow-200 flex items-center justify-center gap-2"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 30.556 30.556"
+            fill="currentColor"
+            className="w-5 h-5"
+          >
+            <path d="M26.311,23.224c-0.812-1.416-2.072-2.375-3.402-2.736c-1.051-0.287-2.141-0.199-3.084,0.334l-2.805-4.904   c1.736-3.463,5.633-11.227,6.332-12.451C24.258,1.884,22.637,0,22.637,0l-7.36,12.872L7.919,0c0,0-1.62,1.884-0.715,3.466   c0.7,1.225,4.598,8.988,6.332,12.451l-2.804,4.904c-0.943-0.533-2.035-0.621-3.084-0.334c-1.332,0.361-2.591,1.32-3.403,2.736   c-1.458,2.547-0.901,5.602,1.239,6.827c0.949,0.545,2.048,0.632,3.107,0.345c1.329-0.363,2.591-1.322,3.402-2.735   c0.355-0.624,0.59-1.277,0.71-1.926v0.001c0.001-0.005,0.001-0.01,0.006-0.015c0.007-0.054,0.017-0.108,0.022-0.167   c0.602-4.039,1.74-6.102,2.545-7.104c0.807,1.002,1.946,3.064,2.547,7.104c0.006,0.059,0.016,0.113,0.021,0.167   c0.004,0.005,0.004,0.01,0.006,0.015v-0.001c0.121,0.648,0.355,1.302,0.709,1.926c0.812,1.413,2.074,2.372,3.404,2.735   c1.059,0.287,2.158,0.2,3.109-0.345C27.213,28.825,27.768,25.771,26.311,23.224z M9.911,26.468   c-0.46,0.803-1.189,1.408-1.948,1.615c-0.338,0.092-0.834,0.148-1.289-0.113c-0.97-0.555-1.129-2.186-0.346-3.556   c0.468-0.812,1.177-1.403,1.95-1.614c0.335-0.091,0.831-0.146,1.288,0.113C10.537,23.47,10.695,25.097,9.911,26.468z M23.881,27.97   c-0.455,0.262-0.949,0.205-1.287,0.113c-0.76-0.207-1.488-0.812-1.949-1.615c-0.783-1.371-0.625-2.998,0.346-3.555   c0.457-0.26,0.953-0.204,1.289-0.113c0.771,0.211,1.482,0.802,1.947,1.614C25.01,25.784,24.852,27.415,23.881,27.97z" />
+          </svg>
           Trim older messages
         </Button>
       )}
