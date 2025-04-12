@@ -2,7 +2,6 @@ import { WebSearchResult } from "../../types/websearch";
 
 export const handleWebSearch = async (
   query: string,
-  numberOfResults: number,
   setResults: React.Dispatch<React.SetStateAction<WebSearchResult[]>>,
   setRelated: React.Dispatch<React.SetStateAction<string[]>>,
   apiKey: string
@@ -16,7 +15,7 @@ export const handleWebSearch = async (
       },
       body: JSON.stringify({
         inputValue: query,
-        number_of_results: numberOfResults,
+        number_of_results: 10,
         category: "webSearch"
       }),
     });
