@@ -1,4 +1,4 @@
-import { InputState, StatusState } from "@/app/types/state";
+import { InputState } from "@/app/types/state";
 import { Message } from "../../types/message";
 import {
   calculateHistoryTokens,
