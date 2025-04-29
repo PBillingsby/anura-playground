@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data.data.models); // handles both formats
+    return NextResponse.json(data.data);
   } catch (error) {
     console.error("[Lilypad Fetch Models Error]", error);
     return NextResponse.json({ error: "Failed to fetch models" }, { status: 500 });
