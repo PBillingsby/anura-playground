@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { endpoint } = await req.json();
+  const { endpoint, category } = await req.json();
 
   if (!process.env.LILYPAD_API_KEY) {
     return NextResponse.json({ error: "Missing Lilypad API key" }, { status: 500 });
@@ -21,7 +21,11 @@ export async function POST(req: Request) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data.data);
+    const returnedData = category === 'image' ?
+      data.data.models :
+      data.data
+
+    return NextResponse.json(returnedData);
   } catch (error) {
     console.error("[Lilypad Fetch Models Error]", error);
     return NextResponse.json({ error: "Failed to fetch models" }, { status: 500 });

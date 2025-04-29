@@ -103,11 +103,23 @@ export default function Main() {
         });
 
         const data = await res.json();
-        setAppState((prev) => ({
-          ...prev,
-          models: data.models || data || [],
-          selectedModel: data.models?.[0] || "",
-        }));
+
+        setAppState((prev) => {
+          const models = Array.isArray(data)
+            ? data
+            : category === "image"
+            ? data.models || []
+            : data.data || [];
+
+          const firstModel =
+            typeof models[0] === "string" ? models[0] : models[0]?.id || "";
+
+          return {
+            ...prev,
+            models,
+            selectedModel: firstModel,
+          };
+        });
       } catch (err) {
         console.error("Failed to fetch models", err);
         setAppState((prev) => ({ ...prev, models: [] }));
@@ -186,6 +198,8 @@ export default function Main() {
         process.env.NEXT_PUBLIC_ANURA_API_KEY!
       ),
   };
+
+  console.log(appState.selectedModel);
 
   const handleInputChange = (val: string) =>
     setInputState((s) => ({ ...s, input: val }));
