@@ -25,13 +25,25 @@ import {
   handleWebSearch,
 } from "../lib/handlers";
 
+type Model = {
+  id: string;
+  created?: number;
+  object?: string;
+  owned_by?: string;
+};
+
 export default function Main() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [appState, setAppState] = useState({
+  const [appState, setAppState] = useState<{
+    category: string;
+    models: (string | Model)[];
+    selectedModel: string;
+    chatMode: boolean;
+  }>({
     category: "text",
-    models: [] as string[],
+    models: [],
     selectedModel: "",
     chatMode: true,
   });
